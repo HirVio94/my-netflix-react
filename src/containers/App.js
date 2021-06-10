@@ -10,6 +10,7 @@ import axios from 'axios';
 const API_KEY = 'api_key=b1bb009f89a909c0ae0b65bc17104e0e';
 const API_END_POINT = 'https://api.themoviedb.org/3/';
 const POPULAR_MOVIES_URL = "discover/movie?language=fr&sort_by=popularity.desc&include_adult=false&append_to_response=images";
+const SEARCH_URL = "search/movie?language=fr&include_adult=false";
 
 class App extends Component {
 
@@ -41,46 +42,70 @@ class App extends Component {
   applyCurrentVideo() {
     axios.get(`${API_END_POINT}movie/${this.state.currentMovie.id}?${API_KEY}&append_to_response=videos&include_adult=false`).then(function (res) {
       console.log('Video Film', res);
-      const youtubeKey = res.data.videos.results[0].key;
-      let newCurrentMovieState = this.state.currentMovie;
-      newCurrentMovieState.videoId = youtubeKey;
+      if (res.data.videos && res.data.videos.results[0]) {
+        const youtubeKey = res.data.videos.results[0].key;
+        let newCurrentMovieState = this.state.currentMovie;
+        newCurrentMovieState.videoId = youtubeKey;
 
-      this.setState({ currentMovie: newCurrentMovieState }, () => {
-        console.log('currentMovieVideoId', this.state.currentMovie);
-      })
+        this.setState({ currentMovie: newCurrentMovieState }, () => {
+          console.log('currentMovieVideoId', this.state.currentMovie);
+        })
+      }
+      this.setRecommendation();
     }.bind(this))
   }
 
-  recevoirCallback(movie){
-      this.setState({currentMovie: movie}, ()=>{
+  recevoirCallback(movie) {
+    this.setState({ currentMovie: movie }, () => {
       this.applyCurrentVideo();
     });
+  }
+
+  onclickSearch(text) {
+    console.log(text);
+    axios.get(`${API_END_POINT}${SEARCH_URL}&${API_KEY}&query=${text}`).then(function (res) {
+      console.log('res-search', res)
+      if (res.data && res.data.results) {
+        if (res.data.results[0].id !== this.state.currentMovie.id) {
+          this.setState({ currentMovie: res.data.results[0] }, () => {
+            this.applyCurrentVideo();
+          })
+        }
+      }
+    }.bind(this))
+  }
+
+  setRecommendation(){
+    axios.get(`${API_END_POINT}movie/${this.state.currentMovie.id}/recommendations?${API_KEY}&language=fr`).then(function (res){
+      this.setState({movieList: res.data.results.slice(0,5) },)
+    }.bind(this));
   }
   render() {
 
     const verifList = () => {
       if (this.state.movieList.length >= 5) {
-        return <VideoList movieList={this.state.movieList} callback={this.recevoirCallback.bind(this)}/>
+        return <VideoList movieList={this.state.movieList} callback={this.recevoirCallback.bind(this)} />
       }
     }
     return (
       <div className="App">
 
-        <h1>Hello world</h1>
-        <SearchBar />
+        <h1>My Netflix</h1>
+        <SearchBar callback={this.onclickSearch.bind(this)} />
         <div className="row">
           <div className="col-md-8">
             <Video videoId={this.state.currentMovie.videoId} />
+            <VideoDetail title={this.state.currentMovie.title} description={this.state.currentMovie.overview} date={this.state.currentMovie.release_date} />
           </div>
           <div className="col-md-4">
             {verifList()}
           </div>
-          
-          
+
+
         </div>
 
 
-        <VideoDetail title={this.state.currentMovie.title} description={this.state.currentMovie.overview} date={this.state.currentMovie.release_date} />
+        
 
 
       </div>

@@ -20,18 +20,21 @@ class SearchBar extends Component {
         this.setState({ inputValue: event.target.value });
     }
 
+    handleClick(){
+        this.props.callback(this.state.inputValue);
+    }
     render() {
         return (
 
             <div className="row">
-                <div className="col-md-8">
+                <div className="col-md-8 input-group mb-3">
                     <input
-                    className="form-control input-lg" 
+                    className="form-control" 
                         type="text"
                         placeholder={this.state.placeholder}
                         onChange={this.handleChange.bind(this)}
                     />
-                    {/* <button>Send</button> */}
+                    <button className="btn btn-outline-secondary" onClick={this.handleClick.bind(this)}>Send</button>
                     {/* <VideoListItem inputValue={this.state.inputValue}/> */}
                 </div>
 
